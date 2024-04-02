@@ -16,10 +16,10 @@
 #define fundo0 "  "
 #define fundo1 "\033[0;40m  \033[0m"
 #define parede "\033[0;47m  \033[0m"
-#define player0 "\033[0;46m  \033[0m"
+#define player0 "\033[48;2;80;200;200m  \033[0m"
 #define player1 "\033[0;42m  \033[0m"
-#define coletavel "\033[0;43m  \033[0m"
-#define fim "\033[0;45m  \033[0m"
+#define coletavel "\033[48;2;242;238;2m  \033[0m"
+#define fim "\033[48;2;180;20;255m  \033[0m"
 
 std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
 
@@ -28,13 +28,27 @@ std::map<char, int> dicty = {{LEFT_ARROW, -1}, {RIGHT_ARROW, +1}, {'a', -1}, {'d
 
 int dx[4]={0, 1, 0, -1}, dy[4]={1, 0, -1, 0};
 
-int mapa[33][33];
+int mapa[33][153];
 
-bool garantia[33][33];
+bool garantia[33][153];
 
 bool coletou, acabou;
 
+int columns;
+
 std::pair<int,int> pos;
+
+int16_t getTerminalSize() {
+    std::string command = "stty size | cut -d' ' -f2";
+    FILE* fpipe = popen(command.c_str(), "r");
+
+	char buffer[128];
+
+    int a = atoi(fgets(buffer, 128, fpipe));
+
+    pclose(fpipe);
+    return a;
+}
 
 void move(int ox, int oy){
 	if(mapa[ox][oy] == 1 || (mapa[ox][oy] == 4 && !coletou))return;
@@ -52,7 +66,7 @@ void imprime(){
 	std::cout << (coletou ? "va para o bloco roxo para ganhar" : "colete o bloco amarelo") << "\n\n";
 
 	for(int i = 0; i <= 31; i++){
-		for(int j = 0; j <= 31; j++){
+		for(int j = 0; j <= columns+1; j++){
 			if(mapa[i][j] == 0) {
 				std::cout << (((i+j)%2) ? fundo1 : fundo0);
 			}
@@ -75,10 +89,10 @@ void imprime(){
 }
 
 void caminho(std::pair<int,int> ini, std::pair<int,int> obj){
-	std::pair<int,int> pai[33][33];
+	std::pair<int,int> pai[33][153];
 
 	for(int i = 1; i <= 30; i++)
-		for(int j = 1; j <= 30; j++)
+		for(int j = 1; j <= columns; j++)
 			pai[i][j] = std::make_pair(-1, -1);
 
 	pai[ini.first][ini.second] = std::make_pair(0, 0);
@@ -128,17 +142,19 @@ void gerar_mapa(){
 
 
 	for(int i = 0; i <= 31; i++){
-		mapa[0][i] = 1;
 		mapa[i][0] = 1;
-		mapa[31][i] = 1;
-		mapa[i][31] = 1;
+		mapa[i][columns+1] = 1;
+	}
+	for(int j = 0; j <= columns+1; j++){
+		mapa[0][j] = 1;
+		mapa[31][j] = 1;
 	}
 
 
 	std::vector<std::pair<int,int>> pontos;
 
 	for(int i = 1; i < 31; i++)
-		for(int j = 1; j < 31; j++)
+		for(int j = 1; j <= columns; j++)
 			pontos.push_back({i, j});
 
 	std::shuffle(pontos.begin(), pontos.end(), rng);
@@ -152,7 +168,7 @@ void gerar_mapa(){
 	caminho(pontos[0], pontos[1]);
 	caminho(pontos[0], pontos[2]);
 
-	int qtd = 350, ptr = 3;
+	int qtd = (int)(12*columns), ptr = 3;
 
 	while(qtd--){
 		while(garantia[pontos[ptr].first][pontos[ptr].second])ptr++;
@@ -163,6 +179,8 @@ void gerar_mapa(){
 }
 
 int main(){
+	columns = std::min(getTerminalSize()/2-2, 150);
+
 	for (uint8_t i = 1; true; i++){
 		gerar_mapa();
 		
