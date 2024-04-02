@@ -191,8 +191,6 @@ int main(){
 		else if(columns*5 < lines)lines = columns*5;
 
 		gerar_mapa();
-
-		std::cout << "teste" << std::endl;
 		
 		imprime();
 		std::cout << "\033[31mRound:\t" << (int)i << "\033[0m" << '\n';
