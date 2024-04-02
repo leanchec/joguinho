@@ -1,4 +1,3 @@
-//#include <bits/stdc++.h>
 #include <random>
 #include <chrono>
 #include <map>
@@ -12,6 +11,9 @@
 #define UP_ARROW 65
 #define RIGHT_ARROW 67
 #define DOWN_ARROW 66
+
+#define LINE_SIZE "stty size | cut -d' ' -f1"
+#define COLUMN_SIZE "stty size | cut -d' ' -f2"
 
 #define fundo0 "  "
 #define fundo1 "\033[0;40m  \033[0m"
@@ -28,18 +30,15 @@ std::map<char, int> dicty = {{LEFT_ARROW, -1}, {RIGHT_ARROW, +1}, {'a', -1}, {'d
 
 int dx[4]={0, 1, 0, -1}, dy[4]={1, 0, -1, 0};
 
-int mapa[33][153];
-
-bool garantia[33][153];
+std::vector<std::vector<int>> mapa;
 
 bool coletou, acabou;
 
-int columns;
+int columns, lines;
 
 std::pair<int,int> pos;
 
-int16_t getTerminalSize() {
-    std::string command = "stty size | cut -d' ' -f2";
+int16_t getTerminalSize(std::string command) {
     FILE* fpipe = popen(command.c_str(), "r");
 
 	char buffer[128];
@@ -65,7 +64,7 @@ void imprime(){
 
 	std::cout << (coletou ? "va para o bloco roxo para ganhar" : "colete o bloco amarelo") << "\n\n";
 
-	for(int i = 0; i <= 31; i++){
+	for(int i = 0; i <= lines+1; i++){
 		for(int j = 0; j <= columns+1; j++){
 			if(mapa[i][j] == 0) {
 				std::cout << (((i+j)%2) ? fundo1 : fundo0);
@@ -89,11 +88,14 @@ void imprime(){
 }
 
 bool caminho(std::pair<int,int> ini, std::pair<int,int> obj){
-	std::pair<int,int> pai[33][153];
+	std::vector<std::vector<std::pair<int,int>>> pai;
+	pai.resize(lines+2);
 
-	for(int i = 1; i <= 30; i++)
-		for(int j = 1; j <= columns; j++)
+	for(int i = 0; i <= lines+1; i++){
+		pai[i].resize(columns+2);
+		for(int j = 0; j <= columns+1; j++)
 			pai[i][j] = std::make_pair(-1, -1);
+	}
 
 	pai[ini.first][ini.second] = std::make_pair(0, 0);
 
@@ -130,25 +132,32 @@ char keyboard_input(){
 }
 
 void gerar_mapa(){
+	mapa.resize(lines+2);
+
+	for(int i = 0; i <= lines+1; i++)
+		mapa[i].resize(columns+2);
+
 	while(1){
-		memset(mapa, 0, sizeof mapa);
-		memset(garantia, 0, sizeof garantia);
+		for(int i = 0; i <= lines+1; i++)
+			for(int j = 0; j <= columns+1; j++)
+				mapa[i][j] = 0;
+
 		coletou = false, acabou = false;
 
 
-		for(int i = 0; i <= 31; i++){
+		for(int i = 0; i <= lines+1; i++){
 			mapa[i][0] = 1;
 			mapa[i][columns+1] = 1;
 		}
 		for(int j = 0; j <= columns+1; j++){
 			mapa[0][j] = 1;
-			mapa[31][j] = 1;
+			mapa[lines+1][j] = 1;
 		}
 
 
 		std::vector<std::pair<int,int>> pontos;
 
-		for(int i = 1; i < 31; i++)
+		for(int i = 1; i <= lines; i++)
 			for(int j = 1; j <= columns; j++)
 				pontos.push_back({i, j});
 
@@ -160,7 +169,7 @@ void gerar_mapa(){
 
 		pos = pontos[0];
 
-		int qtd = (int)(12*columns), ptr = 3;
+		int qtd = (int)(0.4*lines*columns), ptr = 3;
 
 		while(qtd--){		
 			mapa[pontos[ptr].first][pontos[ptr].second] = 1;
@@ -175,10 +184,15 @@ void gerar_mapa(){
 
 int main(){
 	for (uint8_t i = 1; true; i++){
-		columns = std::min(getTerminalSize()/2-2, 150);
-		columns = std::max(columns, 4);
+		columns = std::max(getTerminalSize(COLUMN_SIZE)/2-2, 14);
+		lines = std::max(getTerminalSize(LINE_SIZE)-7, 4);
+
+		if(lines*5 < columns)columns = lines*5;
+		else if(columns*5 < lines)lines = columns*5;
 
 		gerar_mapa();
+
+		std::cout << "teste" << std::endl;
 		
 		imprime();
 		std::cout << "\033[31mRound:\t" << (int)i << "\033[0m" << '\n';
