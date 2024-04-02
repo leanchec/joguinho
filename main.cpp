@@ -179,9 +179,10 @@ void gerar_mapa(){
 }
 
 int main(){
-	columns = std::min(getTerminalSize()/2-2, 150);
-
 	for (uint8_t i = 1; true; i++){
+		columns = std::min(getTerminalSize()/2-2, 150);
+		columns = std::max(columns, 4);
+
 		gerar_mapa();
 		
 		imprime();
