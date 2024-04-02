@@ -88,7 +88,7 @@ void imprime(){
 	std::cout << '\n';
 }
 
-void caminho(std::pair<int,int> ini, std::pair<int,int> obj){
+bool caminho(std::pair<int,int> ini, std::pair<int,int> obj){
 	std::pair<int,int> pai[33][153];
 
 	for(int i = 1; i <= 30; i++)
@@ -109,20 +109,14 @@ void caminho(std::pair<int,int> ini, std::pair<int,int> obj){
 		for(int p = 0; p < 4; p++){
 			int nx = cx+dx[p], ny = cy+dy[p];
 
-			if(pai[nx][ny].first != -1 || (mapa[nx][ny] != 0 && (nx != obj.first || ny != obj.second)))continue;
+			if(pai[nx][ny].first != -1 || mapa[nx][ny] == 1 || (mapa[nx][ny] == 4 && (nx != obj.first || ny != obj.second)))continue;
 
 			pai[nx][ny] = std::make_pair(cx, cy);
 			q.push({nx, ny});
 		}
 	}
 
-	garantia[obj.first][obj.second] = true;
-
-
-	while(obj != ini){
-		obj = pai[obj.first][obj.second];
-		garantia[obj.first][obj.second] = true;
-	}
+	return (pai[obj.first][obj.second].first != -1);
 }
 
 char keyboard_input(){
@@ -136,45 +130,46 @@ char keyboard_input(){
 }
 
 void gerar_mapa(){
-	memset(mapa, 0, sizeof mapa);
-	memset(garantia, 0, sizeof garantia);
-	coletou = false, acabou = false;
+	while(1){
+		memset(mapa, 0, sizeof mapa);
+		memset(garantia, 0, sizeof garantia);
+		coletou = false, acabou = false;
 
 
-	for(int i = 0; i <= 31; i++){
-		mapa[i][0] = 1;
-		mapa[i][columns+1] = 1;
-	}
-	for(int j = 0; j <= columns+1; j++){
-		mapa[0][j] = 1;
-		mapa[31][j] = 1;
-	}
+		for(int i = 0; i <= 31; i++){
+			mapa[i][0] = 1;
+			mapa[i][columns+1] = 1;
+		}
+		for(int j = 0; j <= columns+1; j++){
+			mapa[0][j] = 1;
+			mapa[31][j] = 1;
+		}
 
 
-	std::vector<std::pair<int,int>> pontos;
+		std::vector<std::pair<int,int>> pontos;
 
-	for(int i = 1; i < 31; i++)
-		for(int j = 1; j <= columns; j++)
-			pontos.push_back({i, j});
+		for(int i = 1; i < 31; i++)
+			for(int j = 1; j <= columns; j++)
+				pontos.push_back({i, j});
 
-	std::shuffle(pontos.begin(), pontos.end(), rng);
+		std::shuffle(pontos.begin(), pontos.end(), rng);
 
-	mapa[pontos[0].first][pontos[0].second] = 2;
-	mapa[pontos[1].first][pontos[1].second] = 3;
-	mapa[pontos[2].first][pontos[2].second] = 4;
+		mapa[pontos[0].first][pontos[0].second] = 2;
+		mapa[pontos[1].first][pontos[1].second] = 3;
+		mapa[pontos[2].first][pontos[2].second] = 4;
 
-	pos = pontos[0];
+		pos = pontos[0];
 
-	caminho(pontos[0], pontos[1]);
-	caminho(pontos[0], pontos[2]);
+		int qtd = (int)(12*columns), ptr = 3;
 
-	int qtd = (int)(12*columns), ptr = 3;
+		while(qtd--){		
+			mapa[pontos[ptr].first][pontos[ptr].second] = 1;
+			ptr++;
+		}
 
-	while(qtd--){
-		while(garantia[pontos[ptr].first][pontos[ptr].second])ptr++;
-		
-		mapa[pontos[ptr].first][pontos[ptr].second] = 1;
-		ptr++;
+		if(!caminho(pontos[0], pontos[1]) || !caminho(pontos[0], pontos[2]))continue;
+
+		break;
 	}
 }
 
